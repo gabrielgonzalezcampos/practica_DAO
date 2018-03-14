@@ -16,8 +16,6 @@ public class Session {
         return null;
     }
 
-}
-
     public void save(Object a) {
         Field camps[]=a.getClass().getDeclaredFields();
         StringBuffer query = new StringBuffer("INSERT INTO");
