@@ -5,6 +5,11 @@ public class Employee {
     private String cognom;
     private int salari;
 
+    public Employee(String nom,String cognom,int salari){
+        this.nom=nom;
+        this.cognom=cognom;
+        this.salari=salari;
+    }
     public int getSalari() {
         return salari;
     }
