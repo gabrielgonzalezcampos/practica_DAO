@@ -11,6 +11,8 @@ public class Main{
         Session session = factory.openSession();
         Employee empleado = new Employee("JJ","Soledispa",23000);
         session.get(12,empleado.getClass());
+        session.delete(12,empleado.getClass());
         session.save(empleado);
+        session.update(empleado,12);
     }
 }
