@@ -5,9 +5,17 @@ import org.apache.log4j.Logger;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.PreparedStatement;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 
 public class Session {
     final static Logger log = Logger.getLogger(Main.class);
+    Connection conn = null;
+
     public Object get(int id,Class clase){
         //String query="SELECT * FROM";
         StringBuffer query=new StringBuffer("SELECT * FROM ");
@@ -43,39 +51,32 @@ public class Session {
             return null;
     }
 
-    public void save(Object a) throws IllegalAccessException, InvocationTargetException{
+    public void save(Object a) throws IllegalAccessException, InvocationTargetException,java.sql.SQLException{
         Field camps[]=a.getClass().getDeclaredFields();
-
         StringBuffer query = new StringBuffer("INSERT INTO ");
         query.append(a.getClass().getName());
         query.append(" VALUES (");
         for(int i=0; i<camps.length-1;i++){
             query.append("?,");
         }
-        query.append("?)");
+        query.append("?);");
         //Executem primera query i obtenem la id
-        int id=0;
-        log.debug("Primera Query:" + query);
+        log.debug("Query Save:" + query);
+        String consulta = query.toString();
+        PreparedStatement pstmt = conn.prepareStatement(consulta);
+        int cont =1;
         for (Field camp : camps) {
-            query = new StringBuffer("UPDATE ");
-            query.append(a.getClass().getName());
-            query.append(" SET ");
-            query.append(camp.getName());
-            query.append(" = ");
             StringBuffer get = new StringBuffer("get");
             get.append(camp.getName());
-            log.trace("Métode cridat " + get);
             Method metode = tornarMetode(a, get);
             if (metode != null) {
-                String res = metode.invoke(a).toString();
-                ferQuery(query, metode, res);
-
-                query.append(" WHERE id=");
-                query.append(id);
-                //Executem segonda query
-                log.debug("Segona Query:" + query);
+                Object res = metode.invoke(a);
+                pstmt.setObject(cont,res);
             }
+            cont++;
         }
+        boolean res = pstmt.execute();
+        log.debug("Save realitzat, resultat " + res);
     }
 
     public void update(Object a, int id) throws IllegalAccessException, InvocationTargetException{
@@ -120,5 +121,22 @@ public class Session {
             query.append("'");
         }
         else{ query.append(res); }
+    }
+
+    public int initBD(){
+        try {
+            //conn = DriverManager.getConnection("http://147.83.7.157/" + "?user=ea0&password=Mazinger82");
+            conn = DriverManager.getConnection("jdbc:mysql://147.83.7.157:3306/DAO"+ "?user=root&password=Mazinger82");
+        } catch (SQLException ex) {
+            // handle any errors
+            System.out.println("SQLException: " + ex.getMessage());
+            System.out.println("SQLState: " + ex.getSQLState());
+            System.out.println("VendorError: " + ex.getErrorCode());
+        }
+        if(conn==null) {
+            log.debug("Error al accedir a la base de dades");
+            return -1;
+        }
+        else {return 0;}
     }
 }
