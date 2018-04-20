@@ -10,6 +10,9 @@ public class Employee {
         this.cognom=cognom;
         this.salari=salari;
     }
+    public Employee(){
+
+    };
     public int getSalari() {
         return salari;
     }
@@ -22,4 +25,16 @@ public class Employee {
         return nom;
     }
 
+    public void setCognom(String cognom) {
+        this.cognom = cognom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public void setSalari(int salari) {
+        this.salari = salari;
+    }
 }
+

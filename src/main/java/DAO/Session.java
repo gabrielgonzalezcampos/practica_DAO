@@ -12,27 +12,47 @@ public class Session {
     final static Logger log = Logger.getLogger(Main.class);
     Connection conn = null;
 
-    public Object get(int id,Class clase){
+    public Object get(int id,Class clase)throws SQLException,InstantiationException,IllegalAccessException,InvocationTargetException, NoSuchMethodException{
         //String query="SELECT * FROM";
         StringBuffer query=new StringBuffer("SELECT * FROM ");
-        query.append(clase.getName());
+        String[] table = clase.getName().split("\\.");
+        query.append(table[table.length-1]);
         query.append(" WHERE id=");
         query.append(id);
-        log.debug("Query:" + query);
-        return null;
+        log.debug("Query Get:" + query);
+        Statement stmt = conn.createStatement();
+        ResultSet resultset =stmt.executeQuery(query.toString());
+        Object res=null;
+        if(resultset.next()) {
+            ResultSetMetaData metadata = resultset.getMetaData();
+            res = clase.newInstance();
+            for (int i = 2; i < metadata.getColumnCount() + 1; i++) {
+                StringBuffer set = new StringBuffer("set");
+                set.append(metadata.getColumnName(i));
+                Method metode = tornarMetode(clase, set);
+                if (metode != null) {
+                    Object valor = resultset.getObject(i);
+                    metode.invoke(res, valor);
+                }
+            }
+        }
+        return res;
     }
 
-    public void delete(int id,Class clase){
+    public void delete(int id,Class clase)throws SQLException{
         //String query="SELECT * FROM";
-        StringBuffer query=new StringBuffer("DELETE * FROM ");
+        StringBuffer query=new StringBuffer("DELETE FROM ");
         query.append(clase.getName());
         query.append(" WHERE id=");
         query.append(id);
-        log.debug("Query:" + query);
+        log.debug("Query Delete:" + query);
+        Statement stmt = conn.createStatement();
+        stmt.execute(query.toString());
+        log.debug("Delete realitzat");
     }
 
-    private Method tornarMetode(Object b, StringBuffer funcio){
-        Method metodes[]=b.getClass().getDeclaredMethods();
+    private Method tornarMetode(Class a, StringBuffer funcio){
+        Method metodes[]=a.getDeclaredMethods();
         boolean encontrado=false;
         int i=0;
         while(i<metodes.length&&!encontrado) {
@@ -72,7 +92,7 @@ public class Session {
         for (int cont = 0; cont < camps.length; cont++) {
             StringBuffer get = new StringBuffer("get");
             get.append(camps[cont].getName());
-            Method metode = tornarMetode(a, get);
+            Method metode = tornarMetode(a.getClass(), get);
             if (metode != null) {
                 Object res = metode.invoke(a);
                 pstmt.setObject(cont+2,res);
@@ -105,7 +125,7 @@ public class Session {
             Field camp = camps[cont];
             StringBuffer get = new StringBuffer("get");
             get.append(camp.getName());
-            Method metode = tornarMetode(a, get);
+            Method metode = tornarMetode(a.getClass(), get);
             if (metode != null) {
                 Object res = metode.invoke(a);
                 pstmt.setObject(cont+1, res);
